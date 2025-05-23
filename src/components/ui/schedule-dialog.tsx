@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './dialog';
 import { Button } from './button';
@@ -8,7 +8,7 @@ import { Input } from './input';
 import { Textarea } from './textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { Schedule } from '@/lib/types';
-import { addSchedule } from '@/lib/storage';
+import { addSchedule, updateSchedule } from '@/lib/storage';
 
 interface ScheduleDialogProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ interface ScheduleDialogProps {
   accessCode: string;
   categories: string[];
   onScheduleAdded: () => void;
+  editingSchedule?: Schedule | null;
 }
 
 export function ScheduleDialog({ 
@@ -25,7 +26,8 @@ export function ScheduleDialog({
   selectedDate, 
   accessCode, 
   categories,
-  onScheduleAdded 
+  onScheduleAdded,
+  editingSchedule 
 }: ScheduleDialogProps) {
   const [formData, setFormData] = useState({
     title: '',
@@ -38,6 +40,33 @@ export function ScheduleDialog({
     textColor: '#334155'
   });
   const [error, setError] = useState('');
+
+  // 편집 모드일 때 폼 데이터 설정
+  useEffect(() => {
+    if (editingSchedule) {
+      setFormData({
+        title: editingSchedule.title,
+        content: editingSchedule.content || '',
+        startTime: editingSchedule.startTime || '',
+        endTime: editingSchedule.endTime || '',
+        category: editingSchedule.category,
+        emoji: editingSchedule.emoji || '',
+        backgroundColor: editingSchedule.backgroundColor || '#f8fafc',
+        textColor: editingSchedule.textColor || '#334155'
+      });
+    } else {
+      setFormData({
+        title: '',
+        content: '',
+        startTime: '',
+        endTime: '',
+        category: categories.length > 0 ? categories[0] : '',
+        emoji: '',
+        backgroundColor: '#f8fafc',
+        textColor: '#334155'
+      });
+    }
+  }, [editingSchedule, categories]);
 
   const handleSubmit = () => {
     setError('');
@@ -53,7 +82,7 @@ export function ScheduleDialog({
     }
 
     const scheduleData: Schedule = {
-      id: `schedule_${Date.now()}`,
+      id: editingSchedule?.id || `schedule_${Date.now()}`,
       title: formData.title.trim(),
       content: formData.content.trim(),
       date: format(selectedDate, 'yyyy-MM-dd'),
@@ -63,11 +92,15 @@ export function ScheduleDialog({
       emoji: formData.emoji,
       backgroundColor: formData.backgroundColor,
       textColor: formData.textColor,
-      createdAt: new Date().toISOString()
+      createdAt: editingSchedule?.createdAt || new Date().toISOString()
     };
 
     try {
-      addSchedule(accessCode, scheduleData);
+      if (editingSchedule) {
+        updateSchedule(accessCode, editingSchedule.id, scheduleData);
+      } else {
+        addSchedule(accessCode, scheduleData);
+      }
       onScheduleAdded();
       handleClose();
     } catch (error) {
@@ -95,7 +128,7 @@ export function ScheduleDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>새 일정 추가</DialogTitle>
+          <DialogTitle>{editingSchedule ? '일정 수정' : '새 일정 추가'}</DialogTitle>
           <p className="text-sm text-gray-500">
             {format(selectedDate, 'yyyy년 M월 d일')}
           </p>
@@ -192,7 +225,7 @@ export function ScheduleDialog({
               className="flex-1 bg-indigo-500 hover:bg-indigo-600"
               disabled={!formData.title.trim()}
             >
-              추가
+              {editingSchedule ? '수정' : '추가'}
             </Button>
             <Button onClick={handleClose} variant="outline" className="flex-1">
               취소

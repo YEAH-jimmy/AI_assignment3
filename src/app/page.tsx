@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { generateAccessCode, accessCodeExists, createInitialUserData, saveUserData } from '@/lib/storage';
+import { generateAccessCode, accessCodeExists, createInitialUserData, saveUserData, createCodeMapping } from '@/lib/storage';
 import { useAuthStore } from '@/lib/store';
 import { Calendar, Folder, CheckSquare, Sparkles } from 'lucide-react';
 
@@ -43,13 +43,27 @@ export default function HomePage() {
 
   const handleGenerateNewCode = () => {
     setIsGenerating(true);
-    const newCode = generateAccessCode();
-    const userData = createInitialUserData(newCode);
+    
+    // 사용자가 입력한 코드가 있으면 그것을 사용하고, 없으면 랜덤 생성
+    const userCode = accessCode.trim() || generateAccessCode();
+    
+    // 이미 존재하는 코드인지 확인
+    if (accessCodeExists(userCode)) {
+      setError('이미 존재하는 접속 코드입니다. 다른 코드를 입력하거나 비워두고 생성해주세요.');
+      setIsGenerating(false);
+      return;
+    }
+    
+    // 사용자 코드 → 시스템 코드 매핑 생성
+    const systemCode = createCodeMapping(userCode);
+    const userData = createInitialUserData(systemCode);
     saveUserData(userData);
     
-    setStoreAccessCode(newCode);
+    console.log(`[DEBUG] 코드 생성 - 사용자코드: ${userCode}, 시스템코드: ${systemCode}`);
+    
+    setStoreAccessCode(userCode); // 사용자 코드를 store에 저장
     setTimeout(() => {
-      router.push(`/home?code=${newCode}`);
+      router.push(`/home?code=${userCode}`); // 사용자 코드로 이동
     }, 500);
   };
 
@@ -107,6 +121,9 @@ export default function HomePage() {
                 }}
                 className="text-center text-lg tracking-wider"
                 maxLength={8}
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
               />
               {error && (
                 <p className="text-sm text-red-500 text-center">{error}</p>
@@ -145,7 +162,7 @@ export default function HomePage() {
                 ) : (
                   <div className="flex items-center space-x-2">
                     <Sparkles className="w-4 h-4" />
-                    <span>새로운 코드 생성</span>
+                    <span>{accessCode.trim() ? '이 코드로 생성' : '새로운 코드 생성'}</span>
                   </div>
                 )}
               </Button>
@@ -156,7 +173,18 @@ export default function HomePage() {
         {/* Info */}
         <div className="text-center text-sm text-gray-500 dark:text-gray-400">
           <p>접속 코드는 4-8자리 영문과 숫자로 구성됩니다</p>
+          <p>원하는 코드를 입력 후 생성하거나, 비워두고 랜덤 생성하세요</p>
           <p>모든 데이터는 브라우저에 안전하게 저장됩니다</p>
+          <button 
+            onClick={() => {
+              localStorage.clear();
+              alert('모든 데이터가 삭제되었습니다.');
+              window.location.reload();
+            }}
+            className="mt-2 text-xs text-red-500 hover:text-red-700 underline"
+          >
+            [디버깅] 모든 데이터 삭제
+          </button>
         </div>
       </div>
     </div>
