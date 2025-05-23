@@ -1,168 +1,164 @@
 'use client';
 
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Github, Copy, Sparkles } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import axios from 'axios';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { generateAccessCode, accessCodeExists, createInitialUserData, saveUserData } from '@/lib/storage';
+import { useAuthStore } from '@/lib/store';
+import { Calendar, Folder, CheckSquare, Sparkles } from 'lucide-react';
 
-const PACKAGE_NAME = '@easynext/cli';
-const CURRENT_VERSION = 'v0.1.35';
+export default function HomePage() {
+  const [accessCode, setAccessCode] = useState('');
+  const [error, setError] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const router = useRouter();
+  const { setAccessCode: setStoreAccessCode } = useAuthStore();
 
-function latestVersion(packageName: string) {
-  return axios
-    .get('https://registry.npmjs.org/' + packageName + '/latest')
-    .then((res) => res.data.version);
-}
+  const handleAccessCodeSubmit = () => {
+    if (!accessCode.trim()) {
+      setError('접속 코드를 입력해주세요.');
+      return;
+    }
 
-export default function Home() {
-  const { toast } = useToast();
-  const [latest, setLatest] = useState<string | null>(null);
+    if (accessCode.length < 4 || accessCode.length > 8) {
+      setError('접속 코드는 4-8자리여야 합니다.');
+      return;
+    }
 
-  useEffect(() => {
-    const fetchLatestVersion = async () => {
-      try {
-        const version = await latestVersion(PACKAGE_NAME);
-        setLatest(`v${version}`);
-      } catch (error) {
-        console.error('Failed to fetch version info:', error);
-      }
-    };
-    fetchLatestVersion();
-  }, []);
+    if (!/^[a-z0-9]+$/.test(accessCode)) {
+      setError('접속 코드는 영어 소문자와 숫자만 사용할 수 있습니다.');
+      return;
+    }
 
-  const handleCopyCommand = () => {
-    navigator.clipboard.writeText(`npm install -g ${PACKAGE_NAME}@latest`);
-    toast({
-      description: 'Update command copied to clipboard',
-    });
+    if (!accessCodeExists(accessCode)) {
+      setError('존재하지 않는 접속 코드입니다. 새로운 코드를 생성해주세요.');
+      return;
+    }
+
+    setStoreAccessCode(accessCode);
+    router.push(`/home?code=${accessCode}`);
   };
 
-  const needsUpdate = latest && latest !== CURRENT_VERSION;
+  const handleGenerateNewCode = () => {
+    setIsGenerating(true);
+    const newCode = generateAccessCode();
+    const userData = createInitialUserData(newCode);
+    saveUserData(userData);
+    
+    setStoreAccessCode(newCode);
+    setTimeout(() => {
+      router.push(`/home?code=${newCode}`);
+    }, 500);
+  };
 
   return (
-    <div className="flex min-h-screen relative overflow-hidden">
-      {/* Main Content */}
-      <div className="min-h-screen flex bg-gray-100">
-        <div className="flex flex-col p-5 md:p-8 space-y-4">
-          <h1 className="text-3xl md:text-5xl font-semibold tracking-tighter !leading-tight text-left">
-            Easiest way to start
-            <br /> Next.js project
-            <br /> with Cursor
-          </h1>
-
-          <p className="text-lg text-muted-foreground">
-            Get Pro-created Next.js bootstrap just in seconds
-          </p>
-
-          <div className="flex items-center gap-2">
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="gap-2 w-fit rounded-full px-4 py-2 border border-black"
-            >
-              <a href="https://github.com/easynextjs/easynext" target="_blank">
-                <Github className="w-4 h-4" />
-                GitHub
-              </a>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="gap-2 w-fit rounded-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white"
-            >
-              <a href="https://easynext.org/premium" target="_blank">
-                <Sparkles className="w-4 h-4" />
-                Premium
-              </a>
-            </Button>
-          </div>
-          <Section />
-        </div>
-      </div>
-
-      <div className="min-h-screen ml-16 flex-1 flex flex-col items-center justify-center space-y-4">
-        <div className="flex flex-col items-center space-y-2">
-          <p className="text-muted-foreground">
-            Current Version: {CURRENT_VERSION}
-          </p>
-          <p className="text-muted-foreground">
-            Latest Version:{' '}
-            <span className="font-bold">{latest || 'Loading...'}</span>
-          </p>
-        </div>
-
-        {needsUpdate && (
-          <div className="flex flex-col items-center space-y-2">
-            <p className="text-yellow-600">New version available!</p>
-            <p className="text-sm text-muted-foreground">
-              Copy and run the command below to update:
-            </p>
-            <div className="relative group">
-              <pre className="bg-gray-100 p-4 rounded-lg">
-                npm install -g {PACKAGE_NAME}@latest
-              </pre>
-              <button
-                onClick={handleCopyCommand}
-                className="absolute top-2 right-2 p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="flex items-center justify-center space-x-2">
+            <div className="bg-indigo-500 p-2 rounded-lg">
+              <Calendar className="w-6 h-6 text-white" />
             </div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              ScheduleNest
+            </h1>
           </div>
-        )}
+          <p className="text-gray-600 dark:text-gray-300">
+            간단한 접속 코드로 시작하는 개인 일정 관리
+          </p>
+        </div>
+
+        {/* Features Preview */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="text-center p-3 bg-white/50 dark:bg-slate-800/50 rounded-lg">
+            <Calendar className="w-6 h-6 mx-auto mb-1 text-indigo-500" />
+            <p className="text-xs text-gray-600 dark:text-gray-400">일정</p>
+          </div>
+          <div className="text-center p-3 bg-white/50 dark:bg-slate-800/50 rounded-lg">
+            <Folder className="w-6 h-6 mx-auto mb-1 text-green-500" />
+            <p className="text-xs text-gray-600 dark:text-gray-400">노트</p>
+          </div>
+          <div className="text-center p-3 bg-white/50 dark:bg-slate-800/50 rounded-lg">
+            <CheckSquare className="w-6 h-6 mx-auto mb-1 text-orange-500" />
+            <p className="text-xs text-gray-600 dark:text-gray-400">할 일</p>
+          </div>
+        </div>
+
+        {/* Access Code Card */}
+        <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-0 shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl">접속하기</CardTitle>
+            <CardDescription>
+              기존 접속 코드를 입력하거나 새로운 코드를 생성하세요
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Input
+                type="text"
+                placeholder="접속 코드 입력 (예: abc123)"
+                value={accessCode}
+                onChange={(e) => {
+                  setAccessCode(e.target.value.toLowerCase());
+                  setError('');
+                }}
+                className="text-center text-lg tracking-wider"
+                maxLength={8}
+              />
+              {error && (
+                <p className="text-sm text-red-500 text-center">{error}</p>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <Button 
+                onClick={handleAccessCodeSubmit}
+                className="w-full bg-indigo-500 hover:bg-indigo-600"
+                disabled={!accessCode.trim()}
+              >
+                접속하기
+              </Button>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-300 dark:border-gray-600" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white dark:bg-slate-800 px-2 text-gray-500">또는</span>
+                </div>
+              </div>
+
+              <Button 
+                onClick={handleGenerateNewCode}
+                variant="outline"
+                className="w-full border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:hover:bg-indigo-900/20"
+                disabled={isGenerating}
+              >
+                {isGenerating ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    <span>생성 중...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-4 h-4" />
+                    <span>새로운 코드 생성</span>
+                  </div>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Info */}
+        <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p>접속 코드는 4-8자리 영문과 숫자로 구성됩니다</p>
+          <p>모든 데이터는 브라우저에 안전하게 저장됩니다</p>
+        </div>
       </div>
     </div>
-  );
-}
-
-function Section() {
-  const items = [
-    { href: 'https://nextjs.org/', label: 'Next.js' },
-    { href: 'https://ui.shadcn.com/', label: 'shadcn/ui' },
-    { href: 'https://tailwindcss.com/', label: 'Tailwind CSS' },
-    { href: 'https://www.framer.com/motion/', label: 'framer-motion' },
-    { href: 'https://zod.dev/', label: 'zod' },
-    { href: 'https://date-fns.org/', label: 'date-fns' },
-    { href: 'https://ts-pattern.dev/', label: 'ts-pattern' },
-    { href: 'https://es-toolkit.dev/', label: 'es-toolkit' },
-    { href: 'https://zustand.docs.pmnd.rs/', label: 'zustand' },
-    { href: 'https://supabase.com/', label: 'supabase' },
-    { href: 'https://react-hook-form.com/', label: 'react-hook-form' },
-  ];
-
-  return (
-    <div className="flex flex-col py-5 md:py-8 space-y-2 opacity-75">
-      <p className="font-semibold">What&apos;s Included</p>
-
-      <div className="flex flex-col space-y-1 text-muted-foreground">
-        {items.map((item) => (
-          <SectionItem key={item.href} href={item.href}>
-            {item.label}
-          </SectionItem>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SectionItem({
-  children,
-  href,
-}: {
-  children: React.ReactNode;
-  href: string;
-}) {
-  return (
-    <a
-      href={href}
-      className="flex items-center gap-2 underline"
-      target="_blank"
-    >
-      <CheckCircle className="w-4 h-4" />
-      <p>{children}</p>
-    </a>
   );
 }
