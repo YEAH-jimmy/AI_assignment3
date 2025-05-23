@@ -67,3 +67,48 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 부드러운 전환 효과 */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* 캘린더 다크모드 스타일 */
+.dark .react-calendar {
+  background: rgb(30 41 59);
+  color: rgb(241 245 249);
+  border: 1px solid rgb(51 65 85);
+}
+
+.dark .react-calendar__navigation button {
+  color: rgb(241 245 249);
+}
+
+.dark .react-calendar__navigation button:enabled:hover,
+.dark .react-calendar__navigation button:enabled:focus {
+  background-color: rgb(51 65 85);
+}
+
+.dark .react-calendar__month-view__weekdays {
+  color: rgb(148 163 184);
+}
+
+.dark .react-calendar__tile {
+  background: rgb(30 41 59);
+  color: rgb(241 245 249);
+}
+
+.dark .react-calendar__tile:enabled:hover,
+.dark .react-calendar__tile:enabled:focus {
+  background-color: rgb(51 65 85);
+}
+
+.dark .react-calendar__tile--now {
+  background: rgb(99 102 241);
+  color: white;
+}
+
+.dark .react-calendar__tile--active {
+  background: rgb(99 102 241) !important;
+  color: white;
+}

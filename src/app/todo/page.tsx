@@ -38,7 +38,6 @@ export default function TodoPage({ searchParams }: TodoPageProps) {
     description: '',
     dueDate: '',
     category: '',
-    emoji: '',
     backgroundColor: '#f8fafc',
     textColor: '#334155'
   });
@@ -98,7 +97,7 @@ export default function TodoPage({ searchParams }: TodoPageProps) {
       dueDate: formData.dueDate,
       category: formData.category || categories[0] || '기타',
       completed: editingTodo?.completed || false,
-      emoji: formData.emoji,
+      emoji: '',
       backgroundColor: formData.backgroundColor,
       textColor: formData.textColor,
       createdAt: editingTodo?.createdAt || new Date().toISOString()
@@ -144,7 +143,6 @@ export default function TodoPage({ searchParams }: TodoPageProps) {
       description: todo.description || '',
       dueDate: todo.dueDate || '',
       category: todo.category,
-      emoji: todo.emoji || '',
       backgroundColor: todo.backgroundColor || '#f8fafc',
       textColor: todo.textColor || '#334155'
     });
@@ -167,7 +165,6 @@ export default function TodoPage({ searchParams }: TodoPageProps) {
       description: '',
       dueDate: '',
       category: categories.length > 0 ? categories[0] : '',
-      emoji: '',
       backgroundColor: '#f8fafc',
       textColor: '#334155'
     });
@@ -258,22 +255,13 @@ export default function TodoPage({ searchParams }: TodoPageProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">마감일</label>
                   <Input
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">이모지</label>
-                  <Input
-                    value={formData.emoji}
-                    onChange={(e) => setFormData(prev => ({ ...prev, emoji: e.target.value }))}
-                    placeholder="📝"
-                    maxLength={2}
                   />
                 </div>
                 <div>
@@ -325,9 +313,6 @@ export default function TodoPage({ searchParams }: TodoPageProps) {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                        {todo.emoji && (
-                          <span className="text-lg">{todo.emoji}</span>
-                        )}
                         <h3 
                           className={`font-semibold ${todo.completed ? 'line-through opacity-60' : ''}`}
                           style={{ color: todo.textColor || '#1f2937' }}

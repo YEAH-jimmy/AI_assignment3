@@ -35,7 +35,6 @@ export function ScheduleDialog({
     startTime: '',
     endTime: '',
     category: categories.length > 0 ? categories[0] : '',
-    emoji: '',
     backgroundColor: '#f8fafc',
     textColor: '#334155'
   });
@@ -50,7 +49,6 @@ export function ScheduleDialog({
         startTime: editingSchedule.startTime || '',
         endTime: editingSchedule.endTime || '',
         category: editingSchedule.category,
-        emoji: editingSchedule.emoji || '',
         backgroundColor: editingSchedule.backgroundColor || '#f8fafc',
         textColor: editingSchedule.textColor || '#334155'
       });
@@ -61,7 +59,6 @@ export function ScheduleDialog({
         startTime: '',
         endTime: '',
         category: categories.length > 0 ? categories[0] : '',
-        emoji: '',
         backgroundColor: '#f8fafc',
         textColor: '#334155'
       });
@@ -89,7 +86,7 @@ export function ScheduleDialog({
       startTime: formData.startTime,
       endTime: formData.endTime,
       category: formData.category || categories[0] || '기타',
-      emoji: formData.emoji,
+      emoji: '',
       backgroundColor: formData.backgroundColor,
       textColor: formData.textColor,
       createdAt: editingSchedule?.createdAt || new Date().toISOString()
@@ -116,7 +113,6 @@ export function ScheduleDialog({
       startTime: '',
       endTime: '',
       category: categories.length > 0 ? categories[0] : '',
-      emoji: '',
       backgroundColor: '#f8fafc',
       textColor: '#334155'
     });
@@ -199,24 +195,14 @@ export function ScheduleDialog({
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">이모지</label>
+              <label className="block text-sm font-medium mb-2">배경색</label>
               <Input
-                value={formData.emoji}
-                onChange={(e) => setFormData(prev => ({ ...prev, emoji: e.target.value }))}
-                placeholder="📅"
-                maxLength={2}
+                type="color"
+                value={formData.backgroundColor}
+                onChange={(e) => setFormData(prev => ({ ...prev, backgroundColor: e.target.value }))}
+                className="h-10"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">배경색</label>
-            <Input
-              type="color"
-              value={formData.backgroundColor}
-              onChange={(e) => setFormData(prev => ({ ...prev, backgroundColor: e.target.value }))}
-              className="h-10"
-            />
           </div>
 
           <div className="flex space-x-2 pt-4">

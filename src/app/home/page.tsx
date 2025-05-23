@@ -198,9 +198,6 @@ export default function HomePage({ searchParams }: HomePageProps) {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                              {schedule.emoji && (
-                                <span className="text-lg">{schedule.emoji}</span>
-                              )}
                               <h3 className="font-semibold">{schedule.title}</h3>
                             </div>
                             {(schedule.startTime || schedule.endTime) && (
@@ -265,9 +262,6 @@ export default function HomePage({ searchParams }: HomePageProps) {
                           />
                           <div className="flex-1">
                             <div className="flex items-center space-x-2">
-                              {todo.emoji && (
-                                <span className="text-lg">{todo.emoji}</span>
-                              )}
                               <h3 className={`font-semibold ${todo.completed ? 'line-through opacity-50' : ''}`}>
                                 {todo.title}
                               </h3>
